@@ -12774,8 +12774,11 @@ var axios_1 = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 var $ = __webpack_require__(/*! jquery */ "./node_modules/jquery/dist/jquery.js");
 var $showsList = $("#showsList");
 var $episodesArea = $("#episodesArea");
+var $episodesList = $('#episodesList');
 var $searchForm = $("#searchForm");
 var BASE_API_URL = "http://api.tvmaze.com/";
+;
+;
 /** Given a search term, search for tv shows that match that query.
  *
  *  Returns (promise) array of show objects: [show, show, ...].
@@ -12791,10 +12794,13 @@ function getShowsByTerm(term) {
                 case 1:
                     response = _a.sent();
                     showResponses = response.data.map(function (r) {
-                        r.show.id,
-                            r.show.name,
-                            r.summary,
-                            r.image.original || "https://tinyurl.com/tv-missing.";
+                        var showObj = {
+                            id: r.show.id,
+                            name: r.show.name,
+                            summary: r.show.summary,
+                            image: r.show.image.original || "https://tinyurl.com/tv-missing"
+                        };
+                        return showObj;
                     });
                     return [2 /*return*/, showResponses];
             }
@@ -12820,6 +12826,7 @@ function searchForShowAndDisplay() {
             switch (_a.label) {
                 case 0:
                     term = $("#searchForm-term").val();
+                    console.log("FORM INPUT TERM-->", term);
                     return [4 /*yield*/, getShowsByTerm(term)];
                 case 1:
                     shows = _a.sent();
@@ -12847,9 +12854,67 @@ $searchForm.on("submit", function (evt) {
 /** Given a show ID, get from API and return (promise) array of episodes:
  *      { id, name, season, number }
  */
-// async function getEpisodesOfShow(id) { }
-/** Write a clear docstring for this function... */
-// function populateEpisodes(episodes) { }
+function getEpisodesOfShow(id) {
+    return __awaiter(this, void 0, void 0, function () {
+        var response, episodeResponses;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, axios_1.default.get(BASE_API_URL + "shows/" + id + "/episodes")];
+                case 1:
+                    response = _a.sent();
+                    episodeResponses = response.data.map(function (e) {
+                        var episodeObj = {
+                            id: e.id,
+                            name: e.name,
+                            season: e.season,
+                            number: e.number
+                        };
+                        return episodeObj;
+                    });
+                    return [2 /*return*/, episodeResponses];
+            }
+        });
+    });
+}
+/** populateEpisodes function
+ *
+ * Receives: array of episodes [{Episode}, {Episode}, ...]
+ *
+ * Loops over episodes, creates HTML for each episode and appends to DOM
+ */
+function populateEpisodes(episodes) {
+    $episodesList.empty();
+    for (var _i = 0, episodes_1 = episodes; _i < episodes_1.length; _i++) {
+        var episode = episodes_1[_i];
+        var $episode = $("<li>\n        " + episode.name + "\n        (season " + episode.season + ", episode " + episode.number + ")\n      </li>");
+        $episodesList.append($episode);
+    }
+    $episodesArea.show();
+}
+/** searchForEpisodesAndDisplay function
+ *
+ * receives: click event
+ *
+ * Lists episodes for show that was clicked on, creates HTML and appends to DOM.
+ */
+function searchForEpisodesAndDisplay(evt) {
+    return __awaiter(this, void 0, void 0, function () {
+        var showId, episodes;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    console.log("DISPLAY EPISODES FIRED");
+                    showId = $(evt.target).closest(".Show").data("show-id");
+                    return [4 /*yield*/, getEpisodesOfShow(showId)];
+                case 1:
+                    episodes = _a.sent();
+                    populateEpisodes(episodes);
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+$showsList.on("click", ".Show-getEpisodes", searchForEpisodesAndDisplay);
 
 
 /***/ })
